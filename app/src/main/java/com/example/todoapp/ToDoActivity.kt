@@ -4,6 +4,8 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.content.DialogInterface
 import android.os.Bundle
+import android.text.Editable
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,37 +16,37 @@ import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
+import androidx.room.RoomDatabase
 import com.example.todoapp.database.AppDatabase
 import com.example.todoapp.database.ToDo
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import java.util.*
+import kotlin.concurrent.thread
 
 class ToDoActivity : AppCompatActivity() {
     var todos: List<ToDo> = listOf()
     var adapterff: RecyclerViewAdapter = RecyclerViewAdapter()
-    val newFragment = EditDialogFragment()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val newFragment = initDialog()
         setContentView(R.layout.activity_to_do)
-        val db = Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java, "testDB"
-        ).build()
+
 
         var rv: RecyclerView = findViewById(R.id.todo_list)
         rv.adapter = adapterff
         rv.layoutManager = LinearLayoutManager(this)
 
         Thread(fun() {
-            todos = db.todoDao().getAll()
+            todos = AppDatabase.getInstance(this)!!.todoDao().getAll()
             runOnUiThread(fun() {
                 adapterff.setItems(todos)
             })
         }).start()
 
         val addButton: FloatingActionButton = findViewById(R.id.floatingActionButton)
-        addButton.setOnClickListener {newFragment.show(supportFragmentManager, "missiles")}
+        addButton.setOnClickListener { newFragment.show() }
     }
 
     class RecyclerViewAdapter() :
@@ -86,7 +88,7 @@ class ToDoActivity : AppCompatActivity() {
         override fun getItemCount() = data.size
     }
 
-    fun initDialog():Dialog {
+    fun initDialog(): Dialog {
         val linf = LayoutInflater.from(this)
         val inflator: View = linf.inflate(R.layout.alert_editor, null)
 
@@ -94,6 +96,19 @@ class ToDoActivity : AppCompatActivity() {
         builder.setTitle("Add ToDo")
             .setView(inflator)
             .setPositiveButton("CONFIRM", DialogInterface.OnClickListener(fun(dialog, id) {
+                var title: Editable? = inflator.findViewById<EditText>(R.id.input_title).text
+                var content: Editable? = inflator.findViewById<EditText>(R.id.input_content).text
+                Thread(fun () {
+                    AppDatabase.getInstance(this)!!.todoDao().insert(
+                        ToDo(
+                            null,
+                            title.toString(),
+                            content.toString(),
+                            Date().time,
+                            Date().time
+                        )
+                    )
+                }).start()
 
             }))
             .setNegativeButton("CANCEL", DialogInterface.OnClickListener(fun(dialog, id) {
@@ -101,27 +116,5 @@ class ToDoActivity : AppCompatActivity() {
             }))
 
         return builder.create()
-    }
-
-
-    class EditDialogFragment : DialogFragment() {
-        override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-            return activity?.let {
-                val builder = AlertDialog.Builder(it)
-                val inflater = requireActivity().layoutInflater;
-
-                builder
-                    .setTitle("Add ToDo")
-                    .setView(inflater.inflate(R.layout.alert_editor, null))
-                    .setPositiveButton("CONFIRM", DialogInterface.OnClickListener(fun(dialog, id) {
-
-                    }))
-                    .setNegativeButton("CANCEL", DialogInterface.OnClickListener(fun(dialog, id) {
-                        //
-                    }))
-
-                builder.create()
-            } ?: throw IllegalStateException("Activity cannot be null")
-        }
     }
 }

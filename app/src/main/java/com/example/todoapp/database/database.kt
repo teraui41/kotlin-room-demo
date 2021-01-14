@@ -12,15 +12,15 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun todoDao(): ToDoDao
 
     companion object {
-        private var INSTANCE: RoomDatabase? = null
+        private var INSTANCE: AppDatabase? = null
 
-        fun getInstance(context: Context): RoomDatabase? {
+        fun getInstance(context: Context): AppDatabase? {
             if (INSTANCE == null) {
                 synchronized(RoomDatabase::class) {
                     INSTANCE = Room.databaseBuilder(
                         context,
-                        RoomDatabase::class.java,
-                        RoomDatabase::class.java.simpleName
+                        AppDatabase::class.java,
+                        AppDatabase::class.java.simpleName
                     ).build()
                 }
             }
