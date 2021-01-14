@@ -1,27 +1,32 @@
 package com.example.todoapp
 
-import androidx.appcompat.app.AppCompatActivity
+import android.app.AlertDialog
+import android.app.Dialog
+import android.content.DialogInterface
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
 import com.example.todoapp.database.AppDatabase
 import com.example.todoapp.database.ToDo
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class ToDoActivity : AppCompatActivity() {
     var todos: List<ToDo> = listOf()
     var adapterff: RecyclerViewAdapter = RecyclerViewAdapter()
+    val newFragment = EditDialogFragment()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_to_do)
-
         val db = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java, "testDB"
@@ -37,6 +42,9 @@ class ToDoActivity : AppCompatActivity() {
                 adapterff.setItems(todos)
             })
         }).start()
+
+        val addButton: FloatingActionButton = findViewById(R.id.floatingActionButton)
+        addButton.setOnClickListener {newFragment.show(supportFragmentManager, "missiles")}
     }
 
     class RecyclerViewAdapter() :
@@ -50,11 +58,15 @@ class ToDoActivity : AppCompatActivity() {
         }
 
         class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-            val textView: TextView
+            val TitleTextView: TextView
+            val ContentTextView: TextView
+            val DateTimeTextView: TextView
 
             init {
                 // Define click listener for the ViewHolder's View.
-                textView = view.findViewById(R.id.textView)
+                TitleTextView = view.findViewById(R.id.todo_title)
+                ContentTextView = view.findViewById(R.id.todo_content)
+                DateTimeTextView = view.findViewById(R.id.todo_time)
             }
         }
 
@@ -67,10 +79,49 @@ class ToDoActivity : AppCompatActivity() {
 
             // Get element from your dataset at this position and replace the
             // contents of the view with that element
-            viewHolder.textView.text = data[position].title
+            viewHolder.TitleTextView.text = data[position].title
         }
 
         // Return the size of your dataset (invoked by the layout manager)
         override fun getItemCount() = data.size
+    }
+
+    fun initDialog():Dialog {
+        val linf = LayoutInflater.from(this)
+        val inflator: View = linf.inflate(R.layout.alert_editor, null)
+
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Add ToDo")
+            .setView(inflator)
+            .setPositiveButton("CONFIRM", DialogInterface.OnClickListener(fun(dialog, id) {
+
+            }))
+            .setNegativeButton("CANCEL", DialogInterface.OnClickListener(fun(dialog, id) {
+                //
+            }))
+
+        return builder.create()
+    }
+
+
+    class EditDialogFragment : DialogFragment() {
+        override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+            return activity?.let {
+                val builder = AlertDialog.Builder(it)
+                val inflater = requireActivity().layoutInflater;
+
+                builder
+                    .setTitle("Add ToDo")
+                    .setView(inflater.inflate(R.layout.alert_editor, null))
+                    .setPositiveButton("CONFIRM", DialogInterface.OnClickListener(fun(dialog, id) {
+
+                    }))
+                    .setNegativeButton("CANCEL", DialogInterface.OnClickListener(fun(dialog, id) {
+                        //
+                    }))
+
+                builder.create()
+            } ?: throw IllegalStateException("Activity cannot be null")
+        }
     }
 }
