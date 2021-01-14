@@ -5,48 +5,62 @@ import android.app.Dialog
 import android.content.DialogInterface
 import android.os.Bundle
 import android.text.Editable
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.observe
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.room.Room
-import androidx.room.RoomDatabase
-import com.example.todoapp.database.AppDatabase
-import com.example.todoapp.database.ToDo
+import com.example.todoapp.database.*
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import java.util.*
-import kotlin.concurrent.thread
 
 class ToDoActivity : AppCompatActivity() {
-    var todos: List<ToDo> = listOf()
+    var todos: Flow<List<ToDo>> = flowOf()
     var adapterff: RecyclerViewAdapter = RecyclerViewAdapter()
+
+    private val wordViewModel: ToDoViewModel by viewModels {
+        ToDoViewModelFactory((application as ToDoApplication).repository)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val newFragment = initDialog()
         setContentView(R.layout.activity_to_do)
 
+        // Register Dialog.
+        val newFragment = initDialog()
 
+        // Fetch db instance to global variable.
+//        db = AppDatabase.getInstance(this)
+
+        // Init RecyclerView and bind to adapter.
         var rv: RecyclerView = findViewById(R.id.todo_list)
         rv.adapter = adapterff
         rv.layoutManager = LinearLayoutManager(this)
 
-        Thread(fun() {
-            todos = AppDatabase.getInstance(this)!!.todoDao().getAll()
-            runOnUiThread(fun() {
-                adapterff.setItems(todos)
-            })
-        }).start()
+        wordViewModel.allWords.observe(owner = this) { todos ->
+            // Update the cached copy of the words in the adapter.
+            todos.let { adapterff.setItems(it) }
+        }
+        // Note that data operation should put into thread.
+//        Thread(fun() {
+//            todos = db!!.todoDao().getAll()
+//            runOnUiThread(fun() {
+////                adapterff.setItems(todos.)
+//            })
+//        }).start()
 
         val addButton: FloatingActionButton = findViewById(R.id.floatingActionButton)
         addButton.setOnClickListener { newFragment.show() }
+
+
+
     }
 
     class RecyclerViewAdapter() :
@@ -98,8 +112,9 @@ class ToDoActivity : AppCompatActivity() {
             .setPositiveButton("CONFIRM", DialogInterface.OnClickListener(fun(dialog, id) {
                 var title: Editable? = inflator.findViewById<EditText>(R.id.input_title).text
                 var content: Editable? = inflator.findViewById<EditText>(R.id.input_content).text
-                Thread(fun () {
-                    AppDatabase.getInstance(this)!!.todoDao().insert(
+
+//                Thread(fun () {
+                    wordViewModel.insert(
                         ToDo(
                             null,
                             title.toString(),
@@ -108,7 +123,7 @@ class ToDoActivity : AppCompatActivity() {
                             Date().time
                         )
                     )
-                }).start()
+//                }).start()
 
             }))
             .setNegativeButton("CANCEL", DialogInterface.OnClickListener(fun(dialog, id) {

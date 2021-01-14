@@ -3,6 +3,7 @@
     package="com.example.todoapp">
 
     <application
+        android:name=".database.ToDoApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -18,5 +19,4 @@
             </intent-filter>
         </activity>
     </application>
-
 </manifest>
