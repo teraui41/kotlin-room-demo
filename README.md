@@ -14,7 +14,7 @@ Create a ToDo app for demo.
 
 **build.gradle**
 
-```json
+```
 dependencies {
     ...
     def room_version = "2.2.6"
