@@ -1,6 +1,5 @@
 package com.example.todoapp.database
 
-import androidx.annotation.WorkerThread
 import kotlinx.coroutines.flow.Flow
 
 class ToDoRepository(private val toDoDao: ToDoDao) {
